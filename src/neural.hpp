@@ -14,6 +14,7 @@ namespace neural
 
 	const double time_constant = 0.155;
 
+	double firing_rate(double potential);
 	template<std::size_t N>
 	nvec<N> firing_rates(nvec<N> potentials);
 
@@ -24,15 +25,17 @@ namespace neural
 			vec<N> synaptic_transmissions, vec<N> inhibitory, vec<N> random);
 }
 
+double neural::firing_rate(double potential)
+{
+	// return 1.0 / (1.0 + std::exp(-potential)));
+	return std::pow(1 + std::exp(-potential), -1);
+}
+
 template<std::size_t N>
 neural::vec<N> neural::firing_rates(neural::vec<N> potentials)
 {
 	neural::vec<N> firing_rates;
-	std::transform(potentials.begin(), potentials.end(), firing_rates.begin(),
-			[](double p) {
-				// return 1.0 / (1.0 + std::exp(-p)));
-				return std::pow(1 + std::exp(-p), -1);
-			});
+	std::transform(potentials.begin(), potentials.end(), firing_rates.begin(), neural::firing_rate);
 	return firing_rates;
 }
 
