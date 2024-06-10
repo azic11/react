@@ -4,6 +4,7 @@
 #include <array>
 #include <vector>
 #include <algorithm>
+#include <numeric>
 
 #include "global_defs.hpp"
 
@@ -18,6 +19,9 @@ namespace synaptic
 	using mat = std::array<vec<N>, N>;
 
 	// transmission
+	template<std::size_t N>
+	double transmission_current(nvec<N> potentials, nvec<N> util_factors,
+			vec<N> weights);
 	template<std::size_t N>
 	nvec<N> transmission_currents(nvec<N> potentials, nvec<N> util_factors,
 			mat<N> weights);
@@ -37,23 +41,27 @@ namespace synaptic
 	// TODO: implement
 }
 
+
+template<std::size_t N>
+double synaptic::transmission_current(nvec<N> potentials, nvec<N> util_factors,
+		vec<N> weights)
+{
+	nvec<N> weight_sums;
+	std::transform(weights.begin(), weights.end(), weight_sums.begin(),
+			[](std::vector<double> w) { return std::reduce(w.begin(), w.end(), 0.); });
+	nvec<N> factors;
+	std::transform(potentials.begin(), potentials.end(), util_factors.begin(), factors.begin(),
+			[](double p, double u) { return p * u; });
+	return std::transform_reduce(factors.begin(), factors.end(), weight_sums.begin(), 0.);
+}
+
 template<std::size_t N>
 nvec<N> synaptic::transmission_currents(nvec<N> potentials, nvec<N> util_factors,
 		mat<N> weights)
 {
 	nvec<N> currents;
-	// TODO: optimise!!!
-	std::transform(weights.begin(), weights.end(), currents.begin(), [&](vec <N> w) -> double
-	{
-		double sum = 0.0;
-		for (std::size_t i = 0; i < N; i++)
-		{
-			double f = util_factors[i] * potentials[i];
-			for (std::size_t j = 0; j < N; j++)
-				sum += f * w[i][j];
-		}
-		return sum;
-	});
+	std::transform(weights.begin(), weights.end(), currents.begin(), 
+			[&](vec<N> w) { return transmission_current(potentials, util_factors, w); });
 	return currents;
 }
 
