@@ -47,7 +47,7 @@ void Network<N>::update(double dt, nvec<N> stimulus_current)
 	utilisation_factors = depression::evolve_utilisation_factors(dt, utilisation_factors, firing_rates);
 
 	// update connectome
-	weights = synaptic::evolve_weights(dt, weights, potentials);
+	weights = synaptic::evolve_weights(dt, weights, firing_rates);
 
 	// update potentials
 	nvec<N> random_currents = noise::generate_vector<N,std::mt19937>(rng);

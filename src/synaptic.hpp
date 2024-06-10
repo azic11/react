@@ -32,10 +32,10 @@ namespace synaptic
 	const double decay_rate = 1. / (2 * 24 * 60 * 60);
 	const double LTP_rate = 0.1;
 	const double LTD_rate = 0.01;
-	double evolve_weight(double dt, double weight, double pot1, double pot2);
+	double evolve_weight(double dt, double weight, double fr1, double fr2);
 
 	template<std::size_t N>
-	mat<N> evolve_weights(double dt, mat<N> weights, nvec<N> potentials);
+	mat<N> evolve_weights(double dt, mat<N> weights, nvec<N> firing_rates);
 
 	// structural plasticity
 	// TODO: implement
@@ -65,31 +65,30 @@ nvec<N> synaptic::transmission_currents(nvec<N> potentials, nvec<N> util_factors
 	return currents;
 }
 
-double synaptic::evolve_weight(double dt, double weight, double pot1, double pot2)
+double synaptic::evolve_weight(double dt, double weight, double fr1, double fr2)
 {
-	if ((pot1 < threshold) && (pot2 < threshold))
+	if ((fr1 < threshold) && (fr2 < threshold))
 		return weight * (1 - decay_rate * dt);
-	else if ((pot1 > threshold) && (pot2 > threshold))
+	else if ((fr1 > threshold) && (fr2 > threshold))
 		return weight + LTP_rate * (max_weight - weight) * dt;
 	else
 		return weight * (1 - LTD_rate * dt);
 }
 
 template<std::size_t N>
-synaptic::mat<N> synaptic::evolve_weights(double dt, synaptic::mat<N> weights, nvec<N> potentials)
+synaptic::mat<N> synaptic::evolve_weights(double dt, synaptic::mat<N> weights,
+		nvec<N> firing_rates)
 {
 	mat<N> evolved_weights;
 	// TODO: optimise!!!
 	for (std::size_t i = 0; i < N; i++)
 	{
-		double pot_i = potentials[i];
+		double fr_i = firing_rates[i];
 		for (std::size_t j = 0; j < N; j++)
 		{
-			double pot_j = potentials[j];
+			double fr_j = firing_rates[j];
 			for (std::size_t k = 0; k < weights[i][j].size(); k++)
-
-			evolved_weights[i][j][k] = evolve_weight(dt, weights[i][j][k], pot_i,
-					pot_j);
+				evolved_weights[i][j][k] = evolve_weight(dt, weights[i][j][k], fr_i, fr_j);
 		}
 	}
 	return evolved_weights;
