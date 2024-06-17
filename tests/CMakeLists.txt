@@ -1,4 +1,4 @@
-include(Ctest)
+include(CTest)
 enable_testing()
 
 include(FetchContent)
