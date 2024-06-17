@@ -24,6 +24,9 @@ private:
 public:
 	Network();
 	void update(double dt, nvec<N> stimulus_current);
+
+	neural::vec<N> get_potentials() const { return potentials; }
+	synaptic::mat<N> get_weights() const { return weights; }
 };
 
 
@@ -58,3 +61,4 @@ void Network<N>::update(double dt, nvec<N> stimulus_current)
 }
 
 #endif
+
