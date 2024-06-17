@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <numeric>
+#include <cmath>
 
 #include "global_defs.hpp"
 
