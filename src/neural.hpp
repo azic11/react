@@ -13,7 +13,7 @@ namespace neural
 	template <std::size_t N>
 	using vec = std::array<double,N>;
 
-	const double time_constant = 0.155;
+	constexpr double time_constant = 0.155;
 
 	double firing_rate(double potential);
 	template<std::size_t N>

@@ -34,11 +34,11 @@ namespace synaptic
 			mat<N> weights);
 
 	// synaptic plasticity
-	const double threshold = 0.5;
-	const double max_weight = 0.7;
-	const double decay_rate = 1. / (2 * 24 * 60 * 60);
-	const double LTP_rate = 0.1;
-	const double LTD_rate = 0.01;
+	constexpr double threshold = 0.5;
+	constexpr double max_weight = 0.7;
+	constexpr double decay_rate = 1. / (2 * 24 * 60 * 60);
+	constexpr double LTP_rate = 0.1;
+	constexpr double LTD_rate = 0.01;
 	double evolve_weight(double dt, double weight, double fr1, double fr2);
 
 	template<std::size_t N>

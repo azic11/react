@@ -9,7 +9,7 @@
 
 namespace noise
 {
-	const double std = 1.5;
+	constexpr double std = 1.5;
 
 	template <std::size_t N, typename rng_t>
 	nvec<N> generate_vector(rng_t& rng);

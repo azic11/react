@@ -7,8 +7,8 @@
 
 namespace inhibition
 {
-	const double decay_time = neural::time_constant;
-	const double weight = 3.5 * synaptic::max_weight;
+	constexpr double decay_time = neural::time_constant;
+	constexpr double weight = 3.5 * synaptic::max_weight;
 
 	template<std::size_t N>
 	double evolve_global_current(double dt, double old_current, nvec<N>
