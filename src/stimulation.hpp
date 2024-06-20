@@ -49,6 +49,8 @@ namespace stimulation
 		std::vector<Stimulation> stimulations;
 		nvec<N> current_stimulation_currents;
 		rng_t& rng;
+
+		void update_stimulation_currents();
 	public:
 		Paradigm(std::filesystem::path path, rng_t& rng);
 		std::size_t get_logging_interval() const; // TODO: implement separate log paradigm mechanism
@@ -56,6 +58,20 @@ namespace stimulation
 	};
 }
 
+template <std::size_t N, class rng_t>
+void stimulation::Paradigm<N,rng_t>::update_stimulation_currents()
+{
+	stimulations.erase(stimulations.begin());
+	switch (stimulations[0].mode)
+	{
+		case 'S':
+			current_stimulation_currents = generate_stimulus_currents<N>(stimulations[0].range.first, stimulations[0].range.second, stimulations[0].current);
+			break;
+		case 'R':
+			current_stimulation_currents = generate_random_currents<N>(stimulations[0].range.first, stimulations[0].range.second, stimulations[0].current, rng);
+			break;
+	}
+}
 
 template <std::size_t N, class rng_t>
 stimulation::Paradigm<N,rng_t>::Paradigm(std::filesystem::path path, rng_t& rng) : rng(rng)
@@ -76,24 +92,16 @@ stimulation::Paradigm<N,rng_t>::Paradigm(std::filesystem::path path, rng_t& rng)
 			stimulations.push_back(tmp);
 	}
 	infile.close();
+
+	if (stimulations.size() > 0)
+		update_stimulation_currents();
 }
 
 template <std::size_t N, class rng_t>
 nvec<N> stimulation::Paradigm<N,rng_t>::get_currents(double time)
 {
 	if ((stimulations.size() > 1) and (time >= stimulations[1].time))
-	{
-		stimulations.erase(stimulations.begin());
-		switch (stimulations[0].mode)
-		{
-			case 'S':
-				current_stimulation_currents = generate_stimulus_currents<N>(stimulations[0].range.first, stimulations[0].range.second, stimulations[0].current);
-				break;
-			case 'R':
-				current_stimulation_currents = generate_random_currents<N>(stimulations[0].range.first, stimulations[0].range.second, stimulations[0].current, rng);
-				break;
-		}
-	}
+		update_stimulation_currents();
 	return current_stimulation_currents;
 }
 
