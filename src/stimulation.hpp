@@ -11,17 +11,8 @@
 
 namespace stimulation
 {
-	struct Stimulation
-	{
-		double time;
-		char mode; // TODO: change to enum
-		range_t range; // change name or to two separate indices
-		double current;
-		std::size_t update_interval;
-	};
-
 	template <std::size_t N>
-	nvec<N> generate_stimulus_currents(std::size_t from_idx, std::size_t to_idx, double current)
+	nvec<N> generate_well_defined_currents(std::size_t from_idx, std::size_t to_idx, double current)
 	{
 		nvec<N> currents;
 		std::fill(currents.begin(), currents.end(), 0.);
@@ -34,7 +25,7 @@ namespace stimulation
 	{
 		nvec<N> currents;
 		std::fill(currents.begin(), currents.end(), 0.);
-		std::uniform_int_distribution<std::size_t> distr(from_idx, N);
+		std::uniform_int_distribution<std::size_t> distr(from_idx, N-1);
 		std::vector<std::size_t> indices(num_active);
 		std::generate_n(indices.begin(), num_active, [&rng, &distr](){return distr(rng);});
 		for (std::size_t i : indices)
@@ -42,67 +33,87 @@ namespace stimulation
 		return currents;
 	}
 
+	template <std::size_t N>
+	struct Stimulus
+	{
+		double time;
+		nvec<N> currents;
+	};
+
 	template <std::size_t N, class rng_t>
-	class Paradigm
+	class Stimulator
 	{
 	private:
-		std::vector<Stimulation> stimulations;
-		nvec<N> current_stimulation_currents;
+		std::vector<Stimulus<N>> stimuli;
 		rng_t& rng;
 
-		void update_stimulation_currents();
+		bool next_stimulus_available() const;
+		bool time_for_next_stimulus(double time) const;
+		void move_to_next_stimulus();
 	public:
-		Paradigm(std::filesystem::path path, rng_t& rng);
-		std::size_t get_logging_interval() const; // TODO: implement separate log paradigm mechanism
-		nvec<N> get_currents(double time);
+		Stimulator(std::filesystem::path path, rng_t& rng);
+		nvec<N> get_stimulus_currents(double time);
 	};
 }
 
 template <std::size_t N, class rng_t>
-void stimulation::Paradigm<N,rng_t>::update_stimulation_currents()
+bool stimulation::Stimulator<N,rng_t>::next_stimulus_available() const
 {
-	stimulations.erase(stimulations.begin());
-	switch (stimulations[0].mode)
-	{
-		case 'S':
-			current_stimulation_currents = generate_stimulus_currents<N>(stimulations[0].range.first, stimulations[0].range.second, stimulations[0].current);
-			break;
-		case 'R':
-			current_stimulation_currents = generate_random_currents<N>(stimulations[0].range.first, stimulations[0].range.second, stimulations[0].current, rng);
-			break;
-	}
+	return (stimuli.size() > 1);
 }
 
 template <std::size_t N, class rng_t>
-stimulation::Paradigm<N,rng_t>::Paradigm(std::filesystem::path path, rng_t& rng) : rng(rng)
+bool stimulation::Stimulator<N,rng_t>::time_for_next_stimulus(double time) const
 {
-	Stimulation tmp;
+	return (time >= stimuli[1].time);
+}
+
+template <std::size_t N, class rng_t>
+void stimulation::Stimulator<N,rng_t>::move_to_next_stimulus()
+{
+	stimuli.erase(stimuli.begin());
+}
+
+template <std::size_t N, class rng_t>
+stimulation::Stimulator<N,rng_t>::Stimulator(std::filesystem::path path, rng_t& rng) : rng(rng)
+{
+	double time;
+	char mode;
+	std::size_t idx_param1, idx_param2;
+	double current;
+	std::size_t update_interval;
+	nvec<N> stimulus_current;
 	std::ifstream infile(path);
 	for( std::string line; getline( infile, line ); )
 	{
 		std::istringstream iss(line);
-		iss >> tmp.time >> tmp.mode >> tmp.range.first >> tmp.range.second >> tmp.current >> tmp.update_interval;
-		tmp.time *= 60 * 60;
+		iss >> time >> mode >> idx_param1 >> idx_param2 >> current >> update_interval;
+		time *= 60 * 60;
 
-		if ((tmp.mode=='S') and (tmp.range.second <= tmp.range.first))
-			printf("Indices in stim-file are unordered. Skipping line.\n");
-		else if (stimulations.size() and (tmp.time <= stimulations.back().time))
-			printf("Times in stim-file are unordered. Skipping line.\n");
-		else
-			stimulations.push_back(tmp);
+		switch (mode)
+		{
+			case 'S':
+				stimulus_current = generate_well_defined_currents<N>(idx_param1, idx_param2, current);
+				break;
+			case 'R':
+				stimulus_current = generate_random_currents<N>(idx_param1, idx_param2, current, rng);
+				break;
+		}
+		stimuli.push_back({time, stimulus_current});
 	}
 	infile.close();
 
-	if (stimulations.size() > 0)
-		update_stimulation_currents();
+	if (stimuli.size() < 1)
+		throw std::runtime_error("No stimuli in file.");
 }
 
 template <std::size_t N, class rng_t>
-nvec<N> stimulation::Paradigm<N,rng_t>::get_currents(double time)
+nvec<N> stimulation::Stimulator<N,rng_t>::get_stimulus_currents(double time)
 {
-	if ((stimulations.size() > 1) and (time >= stimulations[1].time))
-		update_stimulation_currents();
-	return current_stimulation_currents;
+	if (next_stimulus_available() and time_for_next_stimulus(time))
+		move_to_next_stimulus();
+
+	return stimuli[0].currents;
 }
 
 #endif

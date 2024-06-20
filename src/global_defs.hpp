@@ -15,6 +15,5 @@ using ncountvec = std::array<std::size_t,N>;
 template <std::size_t N>
 using ncountmat = std::array<ncountvec<N>,N>;
 
-using range_t = std::pair<std::size_t,std::size_t>;
-
 #endif
+
