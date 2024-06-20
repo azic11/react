@@ -1,7 +1,7 @@
 #include <random>
 
 #include "Network.hpp"
-#include "logging.hpp"
+#include "io.hpp"
 #include "stimulation.hpp"
 
 
@@ -36,9 +36,9 @@ int main()
 		synapse_counts = synaptic::count(weights);
 		accumulated_weights = synaptic::calculate_accumulated_weights(weights);
 
-		logging::log_iterable(potentials_log, potentials);
-		logging::log_double_iterable(synapse_count_log, synapse_counts);
-		logging::log_double_iterable(accumulated_weights_log, accumulated_weights);
+		io::write::iterable(potentials_log, potentials);
+		io::write::double_iterable(synapse_count_log, synapse_counts);
+		io::write::double_iterable(accumulated_weights_log, accumulated_weights);
 	}
 
 	potentials_log.close();
