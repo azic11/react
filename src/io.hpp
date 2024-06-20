@@ -23,8 +23,9 @@ namespace io
 			{
 				for (const auto& subitem : item)
 					file << subitem << "\t";
-				file << std::endl;
+				file << '\n';
 			}
+			file << std::flush;
 		}
 	}
 }
