@@ -33,7 +33,7 @@ namespace logging
 		bool time_for_next_state(double time) const;
 		void move_to_next_state();
 	public:
-		Logger(std::filesystem::path paradigm_file_path);
+		Logger(std::vector<LoggerState> paradigm);
 		~Logger();
 		template <std::size_t N>
 		void log(const Network<N>& net);
@@ -72,29 +72,20 @@ void logging::Logger::move_to_next_state()
 	paradigm.erase(paradigm.begin());
 }
 
-logging::Logger::Logger(std::filesystem::path paradigm_file_path)
+logging::Logger::Logger(std::vector<LoggerState> paradigm)
 {
-	std::ifstream paradigm_file(paradigm_file_path);
-	if (!paradigm_file.is_open())
-		throw std::runtime_error("Could not open paradigm file.");
-
-	LoggerState tmp;
-	std::size_t line_num = 0;
-	for( std::string line; getline( paradigm_file, line ); line_num++)
-	{
-		std::istringstream iss(line);
-		iss >> tmp.start_time;
-		for (std::size_t i = 0; i < 5; i++)
-			iss.ignore(std::numeric_limits<std::streamsize>::max(), ' ');
-		iss >> tmp.log_interval;
-		if (tmp.log_interval == 0)
-			throw std::runtime_error(std::string("Cannot set log interval to 0 (line ") + std::to_string(line_num) + std::string(")!"));
-		paradigm.push_back(tmp);
-	}
-	paradigm_file.close();
-
 	if (paradigm.size() < 1)
-		throw std::runtime_error("No log paradigm entries found!");
+		throw std::runtime_error("No log paradigm entries given.");
+
+	for (std::size_t i = 0; i < paradigm.size(); i++)
+		if (paradigm[i].log_interval == 0)
+			throw std::runtime_error(std::string("Cannot set log interval to 0 (entry ") + std::to_string(i) + std::string(")."));
+
+	for (std::size_t i = 1; i < paradigm.size(); i++)
+		if (paradigm[i].start_time < paradigm[i-1].start_time)
+			throw std::runtime_error(std::string("Paradigm times are unordered (entry " + std::to_string(i) + std::string(").")));
+
+	this->paradigm = paradigm;
 
 	potentials_log.open("potentials_log.txt");
 	synapse_count_log.open("synapse_count_log.txt");
