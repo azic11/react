@@ -118,7 +118,6 @@ template<std::size_t N>
 synaptic::mat<N> synaptic::evolve_weights(double dt, synaptic::mat<N> weights,
 		nvec<N> firing_rates)
 {
-	mat<N> evolved_weights;
 	// TODO: optimise!!!
 	for (std::size_t i = 0; i < N; i++)
 	{
@@ -127,10 +126,10 @@ synaptic::mat<N> synaptic::evolve_weights(double dt, synaptic::mat<N> weights,
 		{
 			double fr_j = firing_rates[j];
 			for (std::size_t k = 0; k < weights[i][j].size(); k++)
-				evolved_weights[i][j][k] = evolve_weight(dt, weights[i][j][k], fr_i, fr_j);
+				weights[i][j][k] = evolve_weight(dt, weights[i][j][k], fr_i, fr_j);
 		}
 	}
-	return evolved_weights;
+	return weights;
 }
 
 #endif
