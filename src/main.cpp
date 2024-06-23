@@ -9,7 +9,7 @@
 
 int main()
 {
-	constexpr std::size_t N = 240;
+	constexpr std::size_t N = 20;
 	constexpr double dt = 1.; // seconds
 	const std::filesystem::path paradigm_file_path("../../stimulation_long_term.txt");
 
