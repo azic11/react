@@ -20,10 +20,11 @@ private:
 	double global_inhibition_current;
 
 	std::mt19937 rng;
+	synaptic::StructureArtist<N> structure_artist;
 
 public:
-	Network();
-	void update(double dt, nvec<N> stimulus_current);
+	Network(std::size_t rng_seed, std::size_t max_synapses);
+	void update(double time, double dt, nvec<N> stimulus_current);
 
 	neural::vec<N> get_potentials() const { return potentials; }
 	synaptic::mat<N> get_weights() const { return weights; }
@@ -31,19 +32,16 @@ public:
 
 
 template <std::size_t N>
-Network<N>::Network()
+Network<N>::Network(std::size_t rng_seed, std::size_t max_synapses) : rng(rng_seed), structure_artist(rng, max_synapses)
 {
 	potentials.fill(0.0);
 	//weights.fill(0.0);
 	utilisation_factors.fill(1.0);
 	global_inhibition_current = 0.0;
-
-	std::random_device rd;
-	rng = std::mt19937(rd());
 }
 
 template <std::size_t N>
-void Network<N>::update(double dt, nvec<N> stimulus_current)
+void Network<N>::update(double time, double dt, nvec<N> stimulus_current)
 {
 	nvec<N> firing_rates = neural::firing_rates(potentials);
 	global_inhibition_current = inhibition::evolve_global_current(dt, global_inhibition_current, firing_rates);
@@ -51,6 +49,7 @@ void Network<N>::update(double dt, nvec<N> stimulus_current)
 
 	// update connectome
 	weights = synaptic::evolve_weights(dt, weights, firing_rates);
+	weights = structure_artist.update_structure(time, dt, rng, weights);
 
 	// update potentials
 	nvec<N> random_currents = noise::generate_vector<N,std::mt19937>(rng);

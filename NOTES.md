@@ -41,7 +41,7 @@
 #### musts
 - [X] cross check implemented ODEs with those of original code
 - [X] implement stimulation
-- [ ] implement structural plasticity
+- [X] implement structural plasticity
 - [O] implement logging
   - [X] general mechanism with variable logging rates
   - [O] specific logs / measurements

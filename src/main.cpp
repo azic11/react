@@ -28,7 +28,7 @@ int main()
 	{
 		std::cout << "time=" << time / 3600. << std::endl;
 		nvec<N> stimulus_currents = stimulator.get_stimulus_currents(time);
-		network.update(dt, stimulus_currents);
+		network.update(time, dt, stimulus_currents);
 		logger.handle_logging(time, step, network);
 		step++;
 	}
