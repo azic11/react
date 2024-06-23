@@ -39,7 +39,7 @@
 ## TODO
 ### Simulation
 #### musts
-- [ ] cross check implemented ODEs with those of original code
+- [X] cross check implemented ODEs with those of original code
 - [X] implement stimulation
 - [ ] implement structural plasticity
 - [O] implement logging
@@ -66,6 +66,7 @@
       is not already optimised away by compiler via reference passing or sth
 - [ ] customised error classes where applicable (mostly io stuff)
 - [ ] rename stimulation::Paradigm to stimulation::Stimulator?
+- [ ] synaptic namespace into sub-namespaces
 
 ### evaluation
 - [ ] histograms
