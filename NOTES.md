@@ -49,6 +49,7 @@
     - [X] synapse weights
     - [X] synapse counts
     - [ ] binary representations of connections
+- [ ] enforce loop-free code!
 
 #### maybes
 - [ ] fast-logging

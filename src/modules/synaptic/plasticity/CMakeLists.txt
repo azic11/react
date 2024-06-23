@@ -1,0 +1,14 @@
+project(synaptic_plasticity)
+
+add_library(synaptic_plasticity INTERFACE plasticity.hpp)
+target_include_directories(synaptic_plasticity INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_subdirectory(shared)
+target_link_libraries(synaptic_plasticity INTERFACE synaptic_plasticity_shared)
+
+add_subdirectory(hebbian)
+target_link_libraries(synaptic_plasticity INTERFACE synaptic_plasticity_hebbian)
+
+add_subdirectory(structural)
+target_link_libraries(synaptic_plasticity INTERFACE synaptic_plasticity_structural)
+

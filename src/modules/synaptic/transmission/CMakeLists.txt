@@ -1,0 +1,8 @@
+project(synaptic_transmission)
+add_library(synaptic_transmission INTERFACE)
+target_include_directories(synaptic_transmission INTERFACE include)
+target_link_libraries(synaptic_transmission INTERFACE
+	global_shared
+	synaptic_shared
+)
+

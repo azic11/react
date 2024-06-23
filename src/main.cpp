@@ -13,7 +13,7 @@ int main()
 	constexpr double dt = 1.; // seconds
 	const std::filesystem::path paradigm_file_path("../../stimulation_long_term.txt");
 
-	Network<N> network;
+	Network<N> network(0, 16);
 	ParadigmFile paradigm_file(paradigm_file_path);
 
 	logging::Logger logger = paradigm_file.create_logger();

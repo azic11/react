@@ -4,7 +4,7 @@
 #include <vector>
 #include <algorithm>
 
-#include "global_defs.hpp"
+#include "global_types.hpp"
 
 
 namespace stimulation
