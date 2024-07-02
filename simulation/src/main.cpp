@@ -1,19 +1,30 @@
 #include <random>
 #include <iostream>
+#include <filesystem>
 
 #include "Network.hpp"
 #include "ParadigmFile.hpp"
 #include "logging.hpp"
 #include "stimulation.hpp"
 
+std::filesystem::path parse_command_line_arguments(int argc, char* argv[])
+{
+	if (argc != 2)
+	{
+		std::cerr << "Usage: " << argv[0] << " <path to protocol file>" << std::endl;
+		std::exit(1);
+	}
+	return std::filesystem::path(argv[1]);
+}
 
-int main()
+int main(int argc, char* argv[])
 {
 	constexpr std::size_t N = 20;
 	constexpr double dt = 1.; // seconds
-	const std::filesystem::path paradigm_file_path("../../stimulation_long_term.txt");
 
 	Network<N> network(0, 16);
+
+	const std::filesystem::path paradigm_file_path = parse_command_line_arguments(argc, argv);
 	ParadigmFile paradigm_file(paradigm_file_path);
 
 	logging::Logger logger = paradigm_file.create_logger();
