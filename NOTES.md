@@ -29,6 +29,9 @@
   stimulation completely switched off????? it seems like only those neurons
   after the supplied index1 are. yes, but it appears that they are set
   "manually" to 0 in the read in stimulation file
+- synapses are simply IDed via their place/position. but a synapse could have
+  died and regrown within a log interval. should this new synapse still be
+  considered as the same old one?
   
 ## Implementational differences which should not produce different functionality
 - stimulus paradigm application (insbesondere random stimulus)
