@@ -10,101 +10,82 @@ from group import Group
 
 
 @dataclass
-class RestFactory:
-    n_total: int
-    mean_duration: float = 2.   # hrs
-    log_interval: float  = 3600.
-
-    def make(self, t: float) -> Tuple[float, Rest]:
-        instr = Rest(t, self.log_interval, self.n_total)
-        t_new = t + np.random.exponential(self.mean_duration)
-        return t_new, instr
-
-
-@dataclass
-class SenseFactory:
-    group: Group
-    n_firings: int
-    mean_duration: float    = 4.    # hrs
-    log_interval: float     = 3600.
-    stimulus_current: float = 50.
-
-    @property
-    def n_total(self):
-        return self.group.n_total
-
-    def make(self, t: float) -> Tuple[float, Sense]:
-        instr = Sense(t, self.log_interval, self.group, self.n_firings, self.stimulus_current)
-        t_new = t + np.random.exponential(self.mean_duration)
-        return t_new, instr
-
-
-@dataclass
-class LearnFactory:
-    groups: List[Group]
+class LearnProtocol:
+    duration: float
+    learn_groups: List[Group]
     learn_duration: float   = .005 # hrs
-    rest_duration: float    = .01  # hrs
-    log_interval: float     = 900.
+    rest_duration: float    = .01 # hrs
     stimulus_current: float = 200.
+    log_interval: float     = 900.
 
     def __post_init__(self):
-        if not all(g.n_total == self.groups[0].n_total for g in self.groups):
-            raise ValueError("Groups belong to networks of different total sizes")
+        if not all(g.n_total == self.learn_groups[0].n_total for g in self.learn_groups):
+            raise ValueError("Learn groups belong to networks of different total sizes")
 
     @property
     def n_total(self):
-        return self.groups[0].n_total
+        return self.learn_groups[0].n_total
 
     def __group_permutation(self):
-        yield from cycle(self.groups)
+        yield from cycle(self.learn_groups)
 
-    def make_learn(self, t: float) -> Tuple[float, Learn]:
-        group = next(self.__group_permutation())
-        instr = Learn(t, self.log_interval, group, self.stimulus_current)
-        t_new = t + self.learn_duration
-        return t_new, instr
-
-    def make_rest(self, t: float) -> Tuple[float, Rest]:
-        instr = Rest(t, self.log_interval, self.n_total)
-        t_new = t + self.rest_duration
-        return t_new, instr
+    def generate_instructions(self, t_start: float) -> List[Instruction]:
+        t_end: float = t_start + self.duration
+        t: float = t_start
+        instructs = []
+        while t < t_end:
+            group = next(self.__group_permutation())
+            instructs.append(Learn(t, self.log_interval, group, self.stimulus_current))
+            t += self.learn_duration
+            instructs.append(Rest(t, self.log_interval, self.n_total))
+            t += self.rest_duration
+        return instructs
 
 
 @dataclass
-class Protocol:
-    learn_fac: LearnFactory
-    sense_fac: SenseFactory
-    rest_fac: RestFactory
-    learn_phase_duration: float
-    post_learn_phase_duration :float
+class PostLearnProtocol:
+    duration: float
+    sensory_group: Group
+    n_sensory_firings: int
+    sensory_current: float             = 50.
+    sensory_image_duration: float      = 1.    # sec
+    mean_sensory_phase_duration: float = 4.    # hrs
+    mean_rest_phase_duration: float    = 2.    # hrs
+    log_interval: float                = 3600.
 
-    def __post_init__(self):
-        if not all(f.n_total == self.rest_fac.n_total for f in self.factories):
-            raise ValueError("Factories adress networks of different total sizes")
-
-    @property
-    def factories(self):
-        return (self.learn_fac, self.sense_fac, self.rest_fac)
-
-    @property
-    def instructions(self) -> List[Instruction]:
-        t: float = 0
+    def generate_sensory_phase_instructions(self, t_start: float, t_duration: float) -> List[Instruction]:
+        t_end: float = t_start + t_duration
+        t: float = t_start
         instructs = []
-        while t < self.learn_phase_duration:
-            t, instr = self.learn_fac.make_learn(t)
-            instructs.append(instr)
-            t, instr = self.learn_fac.make_rest(t)
-            instructs.append(instr)
-        t_stop: float = self.learn_phase_duration + self.post_learn_phase_duration
-        while t < t_stop:
-            t, instr = self.sense_fac.make(t)
-            instructs.append(instr)
-            t, instr = self.rest_fac.make(t)
-            instructs.append(instr)
+        while t < t_end:
+            instructs.append(Sense(t, self.log_interval, self.sensory_group, self.n_sensory_firings, self.sensory_current))
+            t += self.sensory_image_duration / 3600.
         return instructs
 
+    def generate_instructions(self, t_start: float) -> List[Instruction]:
+        t_end: float = t_start + self.duration
+        t: float = t_start
+        instructs = []
+        while t < t_end:
+            sensory_phase_duration = np.random.exponential(self.mean_sensory_phase_duration)
+            instructs.extend(self.generate_sensory_phase_instructions(t, sensory_phase_duration))
+            t += sensory_phase_duration
+            instructs.append(Rest(t, self.log_interval, self.sensory_group.n_total))
+            t += np.random.exponential(self.mean_rest_phase_duration)
+        return instructs
+
+
+@dataclass
+class TotalProtocol:
+    learn_protocol: LearnProtocol
+    post_learn_protocol: PostLearnProtocol
+
+    def generate_instructions(self, t_start: float = 0.) -> List[Instruction]:
+        return self.learn_protocol.generate_instructions(t_start) + \
+               self.post_learn_protocol.generate_instructions(t_start + self.learn_protocol.duration)
+
     def __str__(self) -> str:
-        return '\n'.join(map(str, self.instructions))
+        return '\n'.join(map(str, self.generate_instructions()))
 
     def to_file(self, file_path: Path) -> None:
         file_path = Path(file_path)

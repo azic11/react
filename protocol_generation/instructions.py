@@ -16,7 +16,7 @@ class Rest(Instruction):
     n_total: int
 
     def __str__(self):
-        return (f'{self.time:.3f}\t'
+        return (f'{self.time:.5f}\t'
                  'S\t'
                 f'{0}\t'
                 f'{self.n_total - 1}\t'
@@ -30,7 +30,7 @@ class Learn(Instruction):
     stimulus_current: float
 
     def __str__(self):
-        return (f'{self.time:.3f}\t'
+        return (f'{self.time:.5f}\t'
                  'S\t'
                 f'{self.group.start_idx}\t'
                 f'{self.group.end_idx - 1}\t'
@@ -51,7 +51,7 @@ class Sense(Instruction):
             raise ValueError('n_firings must be less than or equal to group size')
 
     def __str__(self):
-        return (f'{self.time:.3f}\t'
+        return (f'{self.time:.5f}\t'
                  'R\t'
                 f'{self.group.start_idx}\t'
                 f'{self.n_firings}\t'
