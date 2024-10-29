@@ -7,14 +7,21 @@
 #include "logging.hpp"
 #include "stimulation.hpp"
 
-std::filesystem::path parse_command_line_arguments(int argc, char* argv[])
+struct Args
 {
-	if (argc != 2)
+	std::filesystem::path protocol_file;
+	std::filesystem::path output_dir;
+};
+
+Args parse_command_line_arguments(int argc, char* argv[])
+{
+	if (argc != 3)
 	{
-		std::cerr << "Usage: " << argv[0] << " <path to protocol file>" << std::endl;
+		std::cerr << "Usage: " << argv[0] << " <protocol file> <output directory>" << std::endl;
 		std::exit(1);
 	}
-	return std::filesystem::path(argv[1]);
+
+	return Args({argv[1], argv[2]});
 }
 
 int main(int argc, char* argv[])
@@ -24,25 +31,27 @@ int main(int argc, char* argv[])
 
 	Network<N> network(0, 16);
 
-	const std::filesystem::path paradigm_file_path = parse_command_line_arguments(argc, argv);
-	ParadigmFile paradigm_file(paradigm_file_path);
+	const Args args = parse_command_line_arguments(argc, argv);
+	ParadigmFile paradigm_file(args.protocol_file);
 
-	logging::Logger logger = paradigm_file.create_logger();
+	logging::Logger logger = paradigm_file.create_logger(args.output_dir);
 
 	std::random_device rd;
 	std::mt19937 rng(rd());
 	stimulation::Stimulator<N> stimulator = paradigm_file.create_stimulator<N,std::mt19937>(rng);
 
-	const double simulation_time = 0.0025 * 60 * 60;
+	const double simulation_time = 2. * 60 * 60;
 	std::size_t step = 0;
 	for (double time = 0.; time < simulation_time; time += dt)
 	{
-		std::cout << "time=" << time / 3600. << std::endl;
+		std::cout << "time=" << time / 3600. << "\r" << std::flush;
 		nvec<N> stimulus_currents = stimulator.get_stimulus_currents(time);
 		network.update(time, dt, stimulus_currents);
 		logger.handle_logging(time, step, network);
 		step++;
 	}
+	std::cout << std::endl;
+
 	logger.log(network);
 
 	return 0;

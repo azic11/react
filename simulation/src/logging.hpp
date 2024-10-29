@@ -4,6 +4,7 @@
 #include <vector>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 
 #include "io.hpp"
 #include "Network.hpp"
@@ -33,7 +34,7 @@ namespace logging
 		bool time_for_next_state(double time) const;
 		void move_to_next_state();
 	public:
-		Logger(std::vector<LoggerState> paradigm);
+		Logger(std::vector<LoggerState> paradigm, std::filesystem::path output_dir);
 		~Logger();
 		template <std::size_t N>
 		void log(const Network<N>& net);
@@ -72,7 +73,7 @@ void logging::Logger::move_to_next_state()
 	paradigm.erase(paradigm.begin());
 }
 
-logging::Logger::Logger(std::vector<LoggerState> paradigm)
+logging::Logger::Logger(std::vector<LoggerState> paradigm, std::filesystem::path output_dir)
 {
 	if (paradigm.size() < 1)
 		throw std::runtime_error("No log paradigm entries given.");
@@ -87,13 +88,29 @@ logging::Logger::Logger(std::vector<LoggerState> paradigm)
 
 	this->paradigm = paradigm;
 
-	potentials_log.open("potentials_log.txt");
-	synapse_count_log.open("synapse_count_log.txt");
-	accumulated_weights_log.open("accumulated_weights_log.txt");
+	if (!std::filesystem::exists(output_dir))
+		throw std::runtime_error("Output directory does not exist.");
+
+	potentials_log.open(output_dir / "potentials_log.txt");
+	if (!potentials_log.is_open())
+		throw std::runtime_error("Could not open potentials log.");
+	synapse_count_log.open(output_dir / "synapse_count_log.txt");
+	if (!synapse_count_log.is_open())
+		throw std::runtime_error("Could not open synapse count log.");
+	accumulated_weights_log.open(output_dir / "accumulated_weights_log.txt");
+	if (!accumulated_weights_log.is_open())
+		throw std::runtime_error("Could not open accumulated weights log.");
 }
 
 logging::Logger::~Logger()
 {
+	if (potentials_log.fail())
+		std::cerr << "Error writing potentials log." << std::endl;
+	if (synapse_count_log.fail())
+		std::cerr << "Error writing synapse count log." << std::endl;
+	if (accumulated_weights_log.fail())
+		std::cerr << "Error writing accumulated weights log." << std::endl;
+
 	potentials_log.close();
 	synapse_count_log.close();
 	accumulated_weights_log.close();

@@ -25,7 +25,7 @@ private:
 	std::vector<ParadigmFileEntry> entries;
 public:
 	ParadigmFile(std::filesystem::path paradigm_file_path);
-	logging::Logger create_logger() const;
+	logging::Logger create_logger(std::filesystem::path output_dir) const;
 	template <std::size_t N, class rng_t>
 	stimulation::Stimulator<N> create_stimulator(rng_t& rng) const;
 };
@@ -37,7 +37,7 @@ ParadigmFile::ParadigmFile(std::filesystem::path paradigm_file_path)
 		throw std::runtime_error("Could not open paradigm file.");
 
 	std::string line;
-	for(std::size_t line_num; getline(paradigm_file, line); line_num++)
+	while(getline(paradigm_file, line))
 	{
 		ParadigmFileEntry tmp;
 		std::istringstream iss(line);
@@ -54,7 +54,7 @@ ParadigmFile::ParadigmFile(std::filesystem::path paradigm_file_path)
 	paradigm_file.close();
 }
 
-logging::Logger ParadigmFile::create_logger() const
+logging::Logger ParadigmFile::create_logger(std::filesystem::path output_dir) const
 {
 	std::vector<logging::LoggerState> paradigm(entries.size());
 	std::transform(entries.begin(), entries.end(), paradigm.begin(), [](ParadigmFileEntry entry)
@@ -64,7 +64,7 @@ logging::Logger ParadigmFile::create_logger() const
 				state.log_interval = entry.log_interval;
 				return state;
 			});
-	return logging::Logger(paradigm);
+	return logging::Logger(paradigm, output_dir);
 }
 
 template<std::size_t N, class rng_t>
