@@ -1,9 +1,12 @@
+import argparse
+
 from protocol import TotalProtocol, LearnProtocol, PostLearnProtocol
 from group import Group
 
+parser = argparse.ArgumentParser(description='Create a test protocol file.')
+parser.add_argument('filepath', type=str, help='The path to the file to be created.')
 
 n_total: int = 20
-file_path = '../test_protocol.txt'
 
 protocol = TotalProtocol(learn_protocol = LearnProtocol(duration          = 1.,
                                                         learn_groups     = [Group(n_total, 0, 5),
@@ -21,5 +24,5 @@ protocol = TotalProtocol(learn_protocol = LearnProtocol(duration          = 1.,
                                                                  mean_rest_phase_duration    = 2.,
                                                                  log_interval                = 3600.))
 
-protocol.to_file(file_path)
+protocol.to_file(parser.parse_args().filepath)
 
